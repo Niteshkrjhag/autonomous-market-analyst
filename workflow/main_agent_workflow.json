@@ -1,0 +1,290 @@
+{
+  "name": "Sentinel - Market Research Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "what is the latest version of iphone availabe?",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are Sentinel, an autonomous strategic analyst.\n\nYour Goal: Identify changes in the market.\n\nProcedure:\n\nAnalyze the Request: Identify the core topic (e.g., 'iPhone', 'NVIDIA').\n\nCheck Memory: Use the recall_past_knowledge tool to see what we knew last time.\n\nCheck Reality: Use the tavily tool to find the absolute latest live data.\n\nSynthesize: Compare the Memory vs. Reality.\n\nIf they match, report: 'No significant strategic shifts.'\n\nIf they differ, report the CHANGE (e.g., 'Pricing increased from $X to $Y')."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -320,
+        -176
+      ],
+      "id": "334e33b6-2abf-42ee-bbc6-f96a55c53e17",
+      "name": "AI Agent",
+      "alwaysOutputData": false,
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-pro",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -416,
+        128
+      ],
+      "id": "56ff94a3-d599-47af-aec1-7d62b467274e",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "X6UMq9woUk548jsz",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "query": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Query', ``, 'string') }}",
+        "options": {
+          "max_results": 3
+        }
+      },
+      "type": "@tavily/n8n-nodes-tavily.tavilyTool",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        128
+      ],
+      "id": "04158ab0-74f5-4956-878f-62694048a0ed",
+      "name": "Travily_Search_Tool",
+      "credentials": {
+        "tavilyApi": {
+          "id": "rnJHWPOnGz18goUB",
+          "name": "Tavily account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        128
+      ],
+      "id": "3fcf39e5-c218-4030-9fc7-84c095e9d9b5",
+      "name": "Embeddings Google Gemini1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "X6UMq9woUk548jsz",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/EXAMPLE/PLACEHOLDER/URL",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $json.output }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        272,
+        -176
+      ],
+      "id": "13e48b3d-2f06-4976-8920-192295fcf5e2",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        128,
+        -272
+      ],
+      "id": "33758386-addd-402e-b1c6-f30847003e1f",
+      "name": "Embeddings Google Gemini2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "X6UMq9woUk548jsz",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Use this to search our internal database for previous reports and historical context about a topic.",
+        "pineconeIndex": {
+          "__rl": true,
+          "mode": "list",
+          "value": "sentinel-memory"
+        },
+        "topK": 5,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        -80,
+        -16
+      ],
+      "id": "c97d3a0f-64cf-45fd-a58c-f22967e61904",
+      "name": "recall_past_knowledge",
+      "credentials": {
+        "pineconeApi": {
+          "id": "pSATzhSqtrNcJnOa",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "update",
+        "pineconeIndex": {
+          "__rl": true,
+          "mode": "list",
+          "value": "sentinel-memory"
+        },
+        "id": "04949cfb-38e4-465b-b3fc-9f6b1d772869"
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        128,
+        -432
+      ],
+      "id": "7405bf40-7af9-4eaf-b4a7-b71b6edca6c1",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "pSATzhSqtrNcJnOa",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        -112
+      ],
+      "id": "713dff1d-ba29-4ec9-a6cc-fd6fcea06bed",
+      "name": "When clicking ‘Execute workflow’"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Travily_Search_Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "recall_past_knowledge",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Pinecone Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "recall_past_knowledge": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini2": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "8c333f3a-ed95-4ee1-8fad-c94e894f7f99",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7e84315793e155f78b6902ce592099267ce825f9d619f42c28363fc779a8cc79"
+  },
+  "id": "9ZSW8YiYL3MH8Xum",
+  "tags": []
+}
